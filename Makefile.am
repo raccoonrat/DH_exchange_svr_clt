@@ -1,0 +1,4 @@
+ACLOCAL_AMFLAGS = -I m4
+AUTOMAKE_OPTIONS = foreign
+SUBDIRS = lib src
+EXTRA_DIST = autogen.sh

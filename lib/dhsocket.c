@@ -65,7 +65,7 @@ void dhsocket_send(int sfd, msg_codes code, void* buf, unsigned int size)
         */
     if(ret == -1)
     {
-        printf( "send() failed: %s", strerror(errno));
+        printf( "send() failed: %s\n", strerror(errno));
     }
     delete(p, sizeof(dhpacket_t)+size);
 }

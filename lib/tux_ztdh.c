@@ -170,6 +170,7 @@ int nzdh_KeyAgreePhase2(unsigned int lenBits, ztcaCryptoCtx *cryptoCtx, ztcaData
             (void)memcpy(agreedSecret, context->agreedSecret,
                          context->agreedSecretLen);
         }
+        *agreedSecretLen = context->agreedSecretLen;
         TZTCA_PRN_UINT("    Shared secret generation time: ", msec);
     }
 

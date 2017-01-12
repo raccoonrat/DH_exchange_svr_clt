@@ -6,10 +6,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef __OPENSSL_DEF__
 #include <openssl/sha.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#endif
 
 typedef unsigned long int gmpuint;
 

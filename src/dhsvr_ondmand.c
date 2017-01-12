@@ -89,7 +89,9 @@ void child(dhsocket_t sock)
         int stat = nzdh_KeyAgreePhase1(ksize,(GPE_DH_CONTEXT_T**)&nzdh_svr_ctx);
         {
             char errmsg[215] = "";
+            int converted_number = htonl(nzdh_svr_ctx->publicValueLen);
             try_continue(1,0);
+            dhsocket_send(sock.cfd, MSG_KEX_DH_GEX_GROUP_SZ, (byte*)&(converted_number), sizeof(converted_number));
             dhsocket_send(sock.cfd, MSG_KEX_DH_GEX_GROUP, nzdh_svr_ctx->publicValue, nzdh_svr_ctx->publicValueLen);
             try_continue(0,1);
 #ifdef DEBUG
@@ -109,26 +111,48 @@ void child(dhsocket_t sock)
         int ret = 0;
         unsigned int bs = nzdh_svr_ctx->publicValueLen;
         byte buf[bs+1];
+        int buf_sz=0;
+        int rcv_sz=0;
         char errmsg[215] = "";
 
         /*dhsocket_recv(sock.cfd, buf, bs);*/
         retry_num = 0;
-    retry:
+    retry0:
         try_continue(1,0);
-        ret = dhsocket_recv_exp(sock.cfd, buf, bs,MSG_KEX_DH_GEX_INIT);
+        ret = dhsocket_recv_exp(sock.cfd, &buf_sz, sizeof(buf_sz),MSG_KEX_DH_GEX_INIT_SZ);
+        try_continue(0,1);
+        if(ret !=0&&retry_num<5)
+        {
+            printf("ret of MSG_KEX_DH_GEX_INIT_SZ is %d, retry num is %d\n", ret, retry_num);
+            retry_num++;
+            goto retry0;
+        }
+        else if(retry_num>=5)
+        {
+            goto err_ret;
+        }
+        rcv_sz = ntohl(buf_sz);
+#ifdef DEBUG
+        printf("<[%s:%d:%s] pid(%d) Pubkey size from client is %d\n",__FILE__,__LINE__,__func__, getpid(),rcv_sz);
+#endif
+
+        retry_num = 0;
+    retry1:
+        try_continue(1,0);
+        ret = dhsocket_recv_exp(sock.cfd, buf, rcv_sz,MSG_KEX_DH_GEX_INIT);
         try_continue(0,1);
         if(ret !=0&&retry_num<5)
         {
             printf("ret of MSG_KEX_DH_GEX_INIT is %d, retry num is %d\n", ret, retry_num);
             retry_num++;
-            goto retry;
+            goto retry1;
         }
         else if(retry_num>=5)
         {
             goto err_ret;
         }
 
-        buf[bs] = '\0';
+        buf[rcv_sz] = '\0';
 #ifdef DEBUG
         sprintf(errmsg, "<[%s:%d:%s] pid(%d) Pubkey from client",__FILE__,__LINE__,__func__, getpid());
         try_continue(1,0);
@@ -136,9 +160,9 @@ void child(dhsocket_t sock)
         try_continue(0,1);
 #endif
 
-        ztca_AllocData(NULL, &remote_data, bs);
-        memcpy(remote_data.data, buf, bs);
-        remote_data.len = nzdh_svr_ctx->keyLenSelection;
+        ztca_AllocData(NULL, &remote_data, (rcv_sz+1));
+        memcpy(remote_data.data, buf, rcv_sz);
+        remote_data.len = rcv_sz;
         agreedSecretLens = 0;
         if ((agreedSecrets =
                  nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL)

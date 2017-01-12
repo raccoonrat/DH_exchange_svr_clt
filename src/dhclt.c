@@ -99,7 +99,9 @@ void child(char *address, int portnum)
         char errmsg[215] = "";
         int stat = nzdh_KeyAgreePhase1(ksize, (GPE_DH_CONTEXT_T**)&nzdh_clt_ctx);
         {
+            int converted_number = htonl(nzdh_clt_ctx->publicValueLen);
             try_continue(1,0);
+            dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INIT_SZ, (byte*)&(converted_number), sizeof(converted_number));
             dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INIT, (byte*)nzdh_clt_ctx->publicValue, nzdh_clt_ctx->publicValueLen);
             try_continue(0,1);
         }
@@ -117,30 +119,52 @@ void child(char *address, int portnum)
         /*step2: get pubkey from svr and invoke nzdh_KeyAgreePhase2 */
         unsigned int bs = nzdh_clt_ctx->publicValueLen;
         byte buf[bs+1];
+        int buf_sz = 0;
+        int rcv_sz = 0;
         int ret = 0;
         char errmsg[215] = "";
         s_memclr(buf, (bs+1)*sizeof(byte));
         /*dhsocket_recv(sock.sfd, buf, bs);*/
         retry_num = 0;
-    retry:
+    retry0:
         try_continue(1,0);
-        ret = dhsocket_recv_exp(sock.sfd, buf, bs,MSG_KEX_DH_GEX_GROUP);
+        ret = dhsocket_recv_exp(sock.sfd, (byte*)&buf_sz, sizeof(buf_sz),MSG_KEX_DH_GEX_GROUP_SZ);
         try_continue(0,1);
         if(ret!=0 && retry_num <5)
         {
-            printf("ret of MSG_KEX_DH_GEX_GROUP is %d, retry_num=%d\n", ret, retry_num);
+            printf("ret of MSG_KEX_DH_GEX_GROUP_SZ is %d, retry_num=%d\n", ret, retry_num);
             retry_num++;
-            goto retry;
+            goto retry0;
         }
         else if(retry_num>=5)
         {
             goto err_ret;
         }
-        buf[bs] = '\0';
-        ztca_AllocData(NULL, &other, bs);
+        rcv_sz = ntohl(buf_sz);
+#ifdef DEBUG
+        printf("<[%s:%d:%s] pid(%d)Pubkey size from server is %d\n",__FILE__,__LINE__,__func__, getpid(),rcv_sz);
+#endif
 
-        memcpy(other.data, buf, bs);
-        other.len = nzdh_clt_ctx->keyLenSelection;
+        retry_num = 0;
+    retry1:
+        try_continue(1,0);
+        ret = dhsocket_recv_exp(sock.sfd, buf, rcv_sz,MSG_KEX_DH_GEX_GROUP);
+        try_continue(0,1);
+        if(ret!=0 && retry_num <5)
+        {
+            printf("ret of MSG_KEX_DH_GEX_GROUP is %d, retry_num=%d\n", ret, retry_num);
+            retry_num++;
+            goto retry1;
+        }
+        else if(retry_num>=5)
+        {
+            goto err_ret;
+        }
+        buf[rcv_sz] = '\0';
+
+        ztca_AllocData(NULL, &other, (rcv_sz+1));
+        memcpy(other.data, buf, rcv_sz);
+        other.len = rcv_sz;
 #ifdef DEBUG
         sprintf(errmsg, "<[%s:%d:%s] pid(%d)Pubkey from server",__FILE__,__LINE__,__func__, getpid());
         try_continue(1,0);

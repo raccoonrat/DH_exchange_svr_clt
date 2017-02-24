@@ -6,13 +6,11 @@
 #include <string.h>
 
 
-static inline int count(int x)
-{
+static inline int count(int x) {
     return floor(log10(x)) + 1;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     zterr err;
     int stat = 0;
     char *buff;
@@ -46,8 +44,7 @@ int main(int argc, char *argv[])
 
     sc = dhsocket_init(&sock);
 
-    if(argc != 2 || cc != 0 || sc != 0)
-    {
+    if(argc != 2 || cc != 0 || sc != 0) {
         printf("Usage %s <port> \n",argv[0]);
         goto err_ret;
     }
@@ -58,8 +55,7 @@ int main(int argc, char *argv[])
     dhsocket_serv_accept(&sock);
 
     err = ztca_Init(FALSE);
-    if (err != ZTERR_OK)
-    {
+    if (err != ZTERR_OK) {
         TZTCA_PRN_RES("ztca_Init - ", TZTCA_ERR_INIT & err);
         return TZTCA_ERR_INIT;
     }
@@ -88,8 +84,7 @@ int main(int argc, char *argv[])
         remote_data.len = nzdh_svr_ctx->keyLenSelection;
         agreedSecretLens = 0;
         if ((agreedSecrets =
-                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL)
-        {
+                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL) {
             goto err_ret;
         }
 
@@ -108,24 +103,18 @@ int main(int argc, char *argv[])
         dhsocket_recv(sock.cfd, final_rec, sizeof(final_rec) - 1);
         final_rec[4] = '\0';
 
-        if(constantVerify(final_rec, (byte*)"Fail") == 1)
-        {
+        if(constantVerify(final_rec, (byte*)"Fail") == 1) {
             goto err_ret;
-        }
-        else if(constantVerify(final_rec, (byte*)"Succ") == 1)
-        {
+        } else if(constantVerify(final_rec, (byte*)"Succ") == 1) {
             printf("Secret sharing succeeded\n");
-        }
-        else
-        {
+        } else {
             goto err_ret;
         }
     }
     stat = 0;
     /* end TUX DH exchange key protocol*/
     err = ztca_Shutdown();
-    if (err != ZTERR_OK)
-    {
+    if (err != ZTERR_OK) {
         TZTCA_PRN_RES("ztca_Shutdown - ", TZTCA_ERR_SHUTDOWN & err);
         stat = TZTCA_ERR_INIT;
     }

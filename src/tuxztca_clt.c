@@ -6,14 +6,12 @@
 #include <string.h>
 
 
-static inline int count(int x)
-{
+static inline int count(int x) {
     return floor(log10(x)) + 1;
 }
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     zterr err;
     int stat = 0;
     char *buff;
@@ -40,8 +38,7 @@ int main(int argc, char *argv[])
     byte initBuf[13];
     char msg[32];
 
-    if(argc != 3 || sc != 0)
-    {
+    if(argc != 3 || sc != 0) {
         printf("Usage %s <hostname> <port> \n",argv[0]);
         goto err_ret;
     }
@@ -58,8 +55,7 @@ int main(int argc, char *argv[])
         goto err_ret;
 
     err = ztca_Init(FALSE);
-    if (err != ZTERR_OK)
-    {
+    if (err != ZTERR_OK) {
         TZTCA_PRN_RES("ztca_Init - ", TZTCA_ERR_INIT & err);
         return TZTCA_ERR_INIT;
     }
@@ -87,8 +83,7 @@ int main(int argc, char *argv[])
         _gp_dumpBuf(0, "< Pubkey from server", other.data, other.len);
         agreedSecretLens = 0;
         if ((agreedSecrets =
-                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL)
-        {
+                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL) {
             goto err_ret;
         }
         int stat = nzdh_KeyAgreePhase2(ksize, nzdh_clt_ctx->cryptoCtx,other,agreedSecrets,
@@ -106,14 +101,11 @@ int main(int argc, char *argv[])
         _gp_dumpBuf(0, "< AgreeSecret from server", buf, bs);
         _gp_dumpBuf(0, "> AgreeSecret with client", agreedSecrets, agreedSecretLens);
 
-        if(memcmp(agreedSecrets, buf, bs)!=0)
-        {
+        if(memcmp(agreedSecrets, buf, bs)!=0) {
             char sec_msg[] = "Fail";
             dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INTERIM, (byte*)sec_msg, strlen(sec_msg));
             goto err_ret;
-        }
-        else
-        {
+        } else {
             char sec_msg[] = "Succ";
             dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INTERIM, (byte*)sec_msg, strlen(sec_msg));
             printf("Secret sharing succeeded\n");
@@ -123,8 +115,7 @@ int main(int argc, char *argv[])
     /* end TUX NZ DH protocol */
 
     err = ztca_Shutdown();
-    if (err != ZTERR_OK)
-    {
+    if (err != ZTERR_OK) {
         TZTCA_PRN_RES("ztca_Shutdown - ", TZTCA_ERR_SHUTDOWN & err);
         stat = TZTCA_ERR_INIT;
     }

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([nzsdk_dh], [0.1], [yunao@gmai.com])
+AC_INIT([nzsdk_dh], [0.1], [yunhwang@oracle.com])
 AC_CONFIG_SRCDIR([lib/hexString.c])
 AC_CONFIG_HEADER([config.h])
 
@@ -14,6 +14,11 @@ LT_INIT
 AM_CONDITIONAL([NZDIR], [test -z "$NZDIR"])
 AS_IF([test  -z "$NZDIR"],
       [AC_MSG_ERROR([NZDIR required but not found!!!])
+      ])
+
+AM_CONDITIONAL([LIBEV], [test -z "$EVDIR"])
+AS_IF([test  -z "$EVDIR"],
+      [AC_MSG_ERROR([EVDIR/libevent required but not found!!!])
       ])
 
 

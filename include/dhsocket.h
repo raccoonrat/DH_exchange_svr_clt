@@ -13,18 +13,24 @@ typedef struct dhsocket dhsocket_t;
 typedef enum
 {
     MSG_KEY_DH_GEX_REQUEST = 0x00,
-    MSG_KEX_DH_GEX_GROUP_SZ = 0x01,
-    MSG_KEX_DH_GEX_GROUP = 0x02,
-    MSG_KEX_DH_GEX_INIT_SZ = 0x03,
-    MSG_KEX_DH_GEX_INIT = 0x04,
+    MSG_KEX_DH_GEX_INIT = 0x01,
+    MSG_KEX_DH_GEX_INIT_ACK = 0x02,
+    MSG_KEX_DH_GEX_GROUP = 0x03,
+    MSG_KEX_DH_GEX_GROUP_ACK = 0x04,
     MSG_KEX_DH_GEX_REPLY = 0x05,
-    MSG_KEX_DH_GEX_VERIFY = 0x06,
-    MSG_KEX_DH_GEX_INTERIM = 0x07
+    MSG_KEX_DH_GEX_REPLY_ACK = 0x06,
+    MSG_KEX_DH_GEX_VERIFY = 0x07,
+    MSG_KEX_DH_GEX_VERIFY_ACK = 0x08,
+    MSG_KEX_DH_GEX_INTERIM = 0x09
 } msg_codes;
 
 struct dhpacket
 {
     msg_codes code;
+    /*
+        size_t len;
+    */
+    uint32_t len;
     byte data[];
 };
 typedef struct dhpacket dhpacket_t;

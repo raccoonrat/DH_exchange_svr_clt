@@ -16,27 +16,32 @@
 int ChildCount=0;
 volatile size_t *glob_var;
 
-static inline int count(int x) {
+static inline int count(int x)
+{
     return floor(log10(x)) + 1;
 }
 
-void sig_child() {
+void sig_child()
+{
     pid_t processID;           /* Process ID from fork() */
 
-    while (ChildCount) { /* Clean up all zombies */
+    while (ChildCount)   /* Clean up all zombies */
+    {
         processID = waitpid((pid_t) -1, NULL, WNOHANG);  /* Non-blocking wait */
         if (processID < 0)  /* waitpid() error? */
             diewitherror("waitpid() failed");
         else if (processID == 0)  /* No child to wait on */
             break;
-        else {
+        else
+        {
             ChildCount--;  /* Cleaned up after a child */
 
         }
     }
 }
 
-void child(dhsocket_t sock) {
+void child(dhsocket_t sock)
+{
     zterr err;
     int stat = 0;
     char *buff;
@@ -70,7 +75,8 @@ void child(dhsocket_t sock) {
         goto err_ret;
 
     err = ztca_Init(FALSE);
-    if (err != ZTERR_OK) {
+    if (err != ZTERR_OK)
+    {
         TZTCA_PRN_RES("ztca_Init - ", TZTCA_ERR_INIT & err);
         err |=TZTCA_ERR_INIT;
         goto err_ret;
@@ -117,11 +123,14 @@ void child(dhsocket_t sock) {
         try_continue(1,0);
         ret = dhsocket_recv_exp(sock.cfd, &buf_sz, sizeof(buf_sz),MSG_KEX_DH_GEX_INIT_SZ);
         try_continue(0,1);
-        if(ret !=0&&retry_num<5) {
+        if(ret !=0&&retry_num<5)
+        {
             printf("ret of MSG_KEX_DH_GEX_INIT_SZ is %d, retry num is %d\n", ret, retry_num);
             retry_num++;
             goto retry0;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
         rcv_sz = ntohl(buf_sz);
@@ -134,11 +143,14 @@ void child(dhsocket_t sock) {
         try_continue(1,0);
         ret = dhsocket_recv_exp(sock.cfd, buf, rcv_sz,MSG_KEX_DH_GEX_INIT);
         try_continue(0,1);
-        if(ret !=0&&retry_num<5) {
+        if(ret !=0&&retry_num<5)
+        {
             printf("ret of MSG_KEX_DH_GEX_INIT is %d, retry num is %d\n", ret, retry_num);
             retry_num++;
             goto retry1;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
 
@@ -155,7 +167,8 @@ void child(dhsocket_t sock) {
         remote_data.len = rcv_sz;
         agreedSecretLens = 0;
         if ((agreedSecrets =
-                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL) {
+                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL)
+        {
             goto err_ret;
         }
 
@@ -185,16 +198,20 @@ void child(dhsocket_t sock) {
         try_continue(1,0);
         ret = dhsocket_recv_exp(sock.cfd, final_rec, sizeof(final_rec) - 1, MSG_KEX_DH_GEX_INTERIM);
         try_continue(0,1);
-        if(ret !=0 && retry_num<5) {
+        if(ret !=0 && retry_num<5)
+        {
             printf("ret of MSG_KEX_DH_GEX_INTERIM is %d, retry num is %d\n", ret, retry_num);
             retry_num++;
             goto retry2;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
 
         final_rec[4] = '\0';
-        if(constantVerify(final_rec, (byte*)"Fail") == 1) {
+        if(constantVerify(final_rec, (byte*)"Fail") == 1)
+        {
             char errmsg[215] = "";
             printf("Secret sharing failed\n");
             try_continue(1,0);
@@ -206,19 +223,24 @@ void child(dhsocket_t sock) {
             _gp_dumpBuf(0, errmsg, agreedSecrets, agreedSecretLens);
             try_continue(0,1);
             goto err_ret;
-        } else if(constantVerify(final_rec, (byte*)"Succ") == 1) {
+        }
+        else if(constantVerify(final_rec, (byte*)"Succ") == 1)
+        {
 #ifdef DEBUG
             printf("Secret sharing succeeded\n");
 #endif
             /**/
-        } else {
+        }
+        else
+        {
             goto err_ret;
         }
     }
     stat = 0;
     /* end TUX DH exchange key protocol*/
     err = ztca_Shutdown();
-    if (err != ZTERR_OK) {
+    if (err != ZTERR_OK)
+    {
         TZTCA_PRN_RES("ztca_Shutdown - ", TZTCA_ERR_SHUTDOWN & err);
         stat = TZTCA_ERR_INIT;
     }
@@ -227,7 +249,8 @@ err_ret:
     if(remote_data.data)
         ztca_FreeData(&remote_data,FALSE);
     */
-    if(nzdh_svr_ctx!=NULL) {
+    if(nzdh_svr_ctx!=NULL)
+    {
         if(nzdh_svr_ctx->cryptoCtx)
             ztca_DestroyCryptoCtx(nzdh_svr_ctx->cryptoCtx);
         free(nzdh_svr_ctx);
@@ -237,14 +260,16 @@ err_ret:
     exit(0);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int cc = 0;
     int sc = 0;
     dhsocket_t sock;
     struct sigaction act;       /* Signal handler specification structure */
     int fd;
 
-    if(argc != 2 || sc != 0) {
+    if(argc != 2 || sc != 0)
+    {
         printf("Usage %s <port> \n",argv[0]);
         goto err_ret;
     }
@@ -277,26 +302,32 @@ int main(int argc, char *argv[]) {
     if(dhsocket_serv_start(&sock,atoi(argv[1])) == 0)
         goto err_ret;
 
-    for (;;) {
+    for (;;)
+    {
         while ( ChildCount >= MAXCLIENTS )
             sleep(1);  /*---You could "sched_yield()" instead---*/
 
         dhsocket_serv_accept(&sock);
 
-        if ( sock.cfd > 0 ) {
+        if ( sock.cfd > 0 )
+        {
             int pid;
 
-            if ( (pid = fork()) == 0 ) {
+            if ( (pid = fork()) == 0 )
+            {
                 /*---CHILD---*/
                 close(sock.sfd);
                 child(sock); /*---Serve the new client---*/
-            } else if ( pid > 0 ) {
+            }
+            else if ( pid > 0 )
+            {
                 /*---PARENT---*/
                 close(sock.cfd);
                 ChildCount++;
 
 
-            } else
+            }
+            else
                 perror("fork() failed");
         }
     }

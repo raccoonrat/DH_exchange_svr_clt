@@ -4,6 +4,7 @@
 #include <sys/time.h>
 
 #include <ztca.h>
+#include <ztch.h>
 
 #define PASSED     0
 
@@ -150,5 +151,20 @@ typedef struct asymTestConfigStr
     ztcaData out;
     ztcaKey *key;
 } asymTestConfig;
+
+/*
+ * typedefs for the digesting function
+ */
+typedef enum
+{
+    DIG_MD2,        /* MD2    algorithm */
+    DIG_MD4,        /* MD4    algorithm */
+    DIG_MD5,        /* MD5    algorithm */
+    DIG_SHA1,   /* SHA1   algorithm */
+    DIG_SHA224, /* SHA224 algorithm */
+    DIG_SHA256, /* SHA256 algorithm */
+    DIG_SHA384, /* SHA384 algorithm */
+    DIG_SHA512  /* SHA512 algorithm */
+} DIG_ALGS;
 
 #endif

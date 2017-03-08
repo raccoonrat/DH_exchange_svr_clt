@@ -16,15 +16,18 @@ typedef unsigned long int gmpuint;
 void * (*volatile memset_volatile)(void *, int, size_t) = memset;
 unsigned char cleanse_ctr = 0;
 
-void* new(int num, size_t size) {
+void* new(int num, size_t size)
+{
     void* v = calloc(num,size);
     return v;
 }
 
-void _cleanse(void *ptr, size_t len) {
+void _cleanse(void *ptr, size_t len)
+{
     unsigned char *p = ptr;
     size_t loop = len, ctr = cleanse_ctr;
-    while(loop--) {
+    while(loop--)
+    {
         *(p++) = (unsigned char)ctr;
         ctr += (17 + ((size_t)p & 0xF));
     }
@@ -35,13 +38,15 @@ void _cleanse(void *ptr, size_t len) {
 }
 
 
-void delete(void* v, size_t n) {
+void delete(void* v, size_t n)
+{
     _cleanse(v,n);
     free(v);
-	v=NULL;
+    v=NULL;
 }
 
-inline void s_memclr(void* v, size_t n) {
+inline void s_memclr(void* v, size_t n)
+{
     memset_volatile(v, 0, n);
 }
 
@@ -51,18 +56,21 @@ inline void s_memclr(void* v, size_t n) {
  * https://cryptocoding.net/index.php/Coding_rules#Use_unsigned_bytes_to_represent_binary_data
  *
  */
-int constantVerify(const byte* a, const byte* b) {
+int constantVerify(const byte* a, const byte* b)
+{
     size_t la = strlen((char*)a);
     size_t lb = strlen((char*)b);
     size_t d = la ^ lb;
     size_t i;
-    for(i = 0; i < la && i < lb; i++) {
+    for(i = 0; i < la && i < lb; i++)
+    {
         d |= a[i] ^ b[i];
     }
     return d == 0;
 }
 
-void diewitherror(char *errorMessage) {
+void diewitherror(char *errorMessage)
+{
     perror(errorMessage);
     exit(1);
 }
@@ -71,7 +79,8 @@ void diewitherror(char *errorMessage) {
 /*
 * SHA1 hash using openssl primitives
 */
-char* hash(const char* msg) {
+char* hash(const char* msg)
+{
     byte h[SHA_DIGEST_LENGTH];
     s_memclr(h, SHA_DIGEST_LENGTH);
     SHA1((byte*)msg, strlen(msg), h);
@@ -84,7 +93,8 @@ char* hash(const char* msg) {
  * https://github.com/luvit/openssl/blob/master/openssl/demos/sign/sign.c
  *
  */
-void sign(const char* msg, byte* sig_buf, unsigned int* sig_len) {
+void sign(const char* msg, byte* sig_buf, unsigned int* sig_len)
+{
     EVP_MD_CTX md;
     EVP_PKEY *pkey = NULL;
     FILE* fp = NULL;
@@ -139,7 +149,8 @@ err:
  * https://github.com/luvit/openssl/blob/master/openssl/demos/sign/sign.c
  *
  */
-int verify(const char* msg, byte* sig_buf, unsigned int sig_len) {
+int verify(const char* msg, byte* sig_buf, unsigned int sig_len)
+{
     EVP_MD_CTX md;
     EVP_PKEY *pkey = NULL;
     FILE* fp = NULL;
@@ -197,24 +208,33 @@ err:
  * Fast exponent algorithm implemented using GMP (mpz_t) primitives
  *
  */
-void fastExponent(mpz_t r, mpz_t a, mpz_t n ,mpz_t m) {
+void fastExponent(mpz_t r, mpz_t a, mpz_t n ,mpz_t m)
+{
     mpz_t x, np;
     mpz_init(np);
     mpz_init_set(x,a);
-    if(mpz_odd_p(n) > 0) {
+    if(mpz_odd_p(n) > 0)
+    {
         mpz_init_set(r,a);
-    } else {
+    }
+    else
+    {
         mpz_init_set_ui(r,(gmpuint)1);
     }
     mpz_fdiv_q_ui(np,n,(gmpuint)2);
 
-    while(mpz_cmp_ui(np,(gmpuint)0) > 0) {
+    while(mpz_cmp_ui(np,(gmpuint)0) > 0)
+    {
         mpz_mul(x,x,x);
         mpz_mod(x,x,m);
-        if(mpz_odd_p(np) > 0) {
-            if(mpz_cmp_ui(r,(gmpuint)1) == 0) {
+        if(mpz_odd_p(np) > 0)
+        {
+            if(mpz_cmp_ui(r,(gmpuint)1) == 0)
+            {
                 mpz_set(r,x);
-            } else {
+            }
+            else
+            {
                 mpz_mul(r,r,x);
                 mpz_mod(r,r,m);
             }
@@ -232,7 +252,8 @@ void fastExponent(mpz_t r, mpz_t a, mpz_t n ,mpz_t m) {
  * not prime. We consider > 0 to be a good enough check.
  *
  */
-int verifySafePrime(mpz_t p, int iter) {
+int verifySafePrime(mpz_t p, int iter)
+{
     int ret = 0;
 
     if(mpz_probab_prime_p(p,iter) == 0)

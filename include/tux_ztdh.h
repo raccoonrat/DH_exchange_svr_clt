@@ -12,6 +12,10 @@
 #define GPE_LOG_TYPE_TUXULOG  2
 #define GPE_LOG_TYPE_DEFAULT  3
 
+#define LLELENGTHINBYTES (128 / 8)
+#define FD_ATTR_INITIATOR          0x00000001
+#define FD_ATTR_RESPONDER          0x00000002
+
 /*
  * Prime bits: 768
  * Exponent bits: 128
@@ -189,10 +193,57 @@ typedef struct
     ztcaCryptoCtx *cryptoCtx;
 } GPE_DH_CONTEXT_T;
 
+
+#if defined(uint64)
+#undef uint64
+#endif
+
+#ifndef uint8
+typedef unsigned char uint8;
+#endif /* uint8 */
+
+#ifndef offsetof
+#define offsetof(t, e)  ((char *)(&((t *)0)->e) - (char *)(t *)0)
+#endif
+
+#if defined(uint_64)
+typedef uint_64 TM64U
+#else
+#if defined(WIN32)
+#if defined(UINT64)
+typedef UINT64 TM64U;
+#else
+typedef unsigned long long TM64U;
+#endif /* UINT64 */
+#else
+typedef unsigned long long TM64U;
+#endif /* !WIN32   */
+#endif  /* !uint_64 */
+typedef struct aesgcm_handle_t * AES_GCM_HANDLE_P_T;
+typedef struct aesgcm_handle_t
+{
+    uint8       sendAesKey[32];
+    uint8       recvAesKey[32];
+    uint8       state;
+    AES_GCM_HANDLE_P_T next;
+    AES_GCM_HANDLE_P_T prev;
+} AES_GCM_HANDLE_T;
+
+
 unsigned char * nzdh_AllocAgreedSecretKey(unsigned int *sizep);
 int nzdh_KeyAgreePhase1(unsigned int lenBits, GPE_DH_CONTEXT_T **nzdh_ctx);
 int nzdh_KeyAgreePhase2(unsigned int lenBits, ztcaCryptoCtx *cryptoCtx, ztcaData pub_remote,
                         unsigned char *agreedSecret, unsigned int *agreedSecretLen, GPE_DH_CONTEXT_T  *context);
 void nzdh_destroy(ztcaCryptoCtx *cryptoCtx, ztcaData pub, ztcaData sess);
+void nzdh_destroy_1(ztcaCryptoCtx *cryptoCtx);
 void _gp_dumpBuf(int out, char *label, char *buf, int buflen);
+
+int _e_cryp_digest(unsigned char *outbuf, unsigned int *outbuf_sizep,
+                   const unsigned char *inbuf, unsigned int  inbuf_size, DIG_ALGS digalg);
+int digestBuff(ub1* in, ub4 inlen,
+               ub1 *out, ub4* outlen, ztcaDigestAlgType hashType);
+int runDigestTestForType(ztcaDigestAlgType hashType);
+int _sess_setupCtx(void *handle,unsigned char *agreedSecrets, unsigned int agreedSecretLens, unsigned char *agreedSecretr,
+                   unsigned int agreedSecretLenr, int flag);
+
 #endif

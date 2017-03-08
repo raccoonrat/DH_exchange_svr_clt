@@ -9,14 +9,17 @@
 #include <syslog.h>
 #include <errno.h>
 
-int dhsocket_init(dhsocket_t* this) {
+int dhsocket_init(dhsocket_t* this)
+{
     this->cfd = 0;
     this->sfd = socket(AF_INET, SOCK_STREAM, 0);
     return (this->sfd < 0);
 }
 
-int dhsocket_serv_start(dhsocket_t* this, unsigned int port) {
-    struct sockaddr_in serv_addr = {
+int dhsocket_serv_start(dhsocket_t* this, unsigned int port)
+{
+    struct sockaddr_in serv_addr =
+    {
         .sin_family = AF_INET,
         .sin_addr = {
             .s_addr = htonl(INADDR_ANY)
@@ -29,12 +32,15 @@ int dhsocket_serv_start(dhsocket_t* this, unsigned int port) {
     return listen(this->sfd, 0) >= 0;
 }
 
-void dhsocket_serv_accept(dhsocket_t* this) {
+void dhsocket_serv_accept(dhsocket_t* this)
+{
     this->cfd = accept(this->sfd, NULL, NULL);
 }
 
-int dhsocket_client_start(dhsocket_t* this, const char* addr, unsigned int port) {
-    struct sockaddr_in serv_addr = {
+int dhsocket_client_start(dhsocket_t* this, const char* addr, unsigned int port)
+{
+    struct sockaddr_in serv_addr =
+    {
         .sin_family = AF_INET,
         .sin_addr = {
             .s_addr = inet_addr(addr)
@@ -45,25 +51,27 @@ int dhsocket_client_start(dhsocket_t* this, const char* addr, unsigned int port)
     return connect(this->sfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) >= 0;
 }
 
-void dhsocket_send(int sfd, msg_codes code, void* buf, unsigned int size) {
+void dhsocket_send(int sfd, msg_codes code, void* buf, unsigned int size)
+{
     int ret = 0;
     dhpacket_t *p = new(1,sizeof(dhpacket_t)+size);
     if(!p)
         return;
     p->code = code;
-	p->len = sizeof(dhpacket_t)+size;
     memcpy(p->data, buf, size);
     ret = send(sfd, p, sizeof(dhpacket_t)+size, 0);
     /*
         if (write(sfd, p, sizeof(dhpacket_t)+size) != sizeof(dhpacket_t)+size)
         */
-    if(ret == -1) {
+    if(ret == -1)
+    {
         printf( "send() failed: %s", strerror(errno));
     }
     delete(p, sizeof(dhpacket_t)+size);
 }
 
-void dhsocket_recv(int sfd, void* buf, unsigned int size) {
+void dhsocket_recv(int sfd, void* buf, unsigned int size)
+{
     dhpacket_t *p = new(1,sizeof(dhpacket_t)+size);
     if(!p)
         return;
@@ -73,14 +81,16 @@ void dhsocket_recv(int sfd, void* buf, unsigned int size) {
 }
 
 
-int dhsocket_recv_exp(int sfd, void* buf, unsigned int size, msg_codes exp) {
+int dhsocket_recv_exp(int sfd, void* buf, unsigned int size, msg_codes exp)
+{
     int ret = 0;
     dhpacket_t *p = new(1,sizeof(dhpacket_t)+size);
     if(!p)
         return -1;
 
     ret = recv(sfd, p, sizeof(dhpacket_t)+size, 0);
-    if(ret ==0 || ret == -1) {
+    if(ret ==0 || ret == -1)
+    {
         printf("recv() failed: %s\n", strerror(errno));
         return -1;
     }
@@ -92,7 +102,8 @@ int dhsocket_recv_exp(int sfd, void* buf, unsigned int size, msg_codes exp) {
     return 0;
 }
 
-void dhsocket_close(dhsocket_t* this) {
+void dhsocket_close(dhsocket_t* this)
+{
     shutdown(this->sfd,SHUT_WR);
     close(this->sfd);
 }
@@ -109,7 +120,8 @@ void dhsocket_close(dhsocket_t* this) {
  *        NULL on failure.
  */
 char *
-dhsocket_resolvename(char *hostnm) {
+dhsocket_resolvename(char *hostnm)
+{
     char    *ip;    /* internet number to be returned */
     int     cnt;    /* number of hosts returned by gethostbyname() */
     int     rnd;    /* number of randomly chosen host */
@@ -117,11 +129,13 @@ dhsocket_resolvename(char *hostnm) {
     char    *s;
 
     host = gethostbyname(hostnm);
-    if (host == NULL) {
+    if (host == NULL)
+    {
         return(NULL);
     }
     ip = (char *)malloc((size_t)1024 + 1);
-    if (ip == NULL) {
+    if (ip == NULL)
+    {
         return(NULL);
     }
     /*

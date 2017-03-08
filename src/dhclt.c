@@ -16,27 +16,29 @@
 
 #define DEFAULT_DURATION 60    /* default duration is 60 second */
 #define MAX_DURATION     36000 /* max duration is 10Hours */
-#define SINGLECHILD      0xefff
 
-static inline int count(int x) {
+static inline int count(int x)
+{
     return floor(log10(x)) + 1;
 }
 
-//int NumChildren=0;
-int NumChildren=SINGLECHILD;
+int NumChildren=0;
 
 volatile int *glob_var;
 
-void sig_child() {
+void sig_child()
+{
     pid_t processID;           /* Process ID from fork() */
 
-    while (NumChildren) { /* Clean up all zombies */
+    while (NumChildren)   /* Clean up all zombies */
+    {
         processID = waitpid((pid_t) -1, NULL, WNOHANG);  /* Non-blocking wait */
         if (processID < 0)  /* waitpid() error? */
             diewitherror("waitpid() failed");
         else if (processID == 0)  /* No child to wait on */
             break;
-        else {
+        else
+        {
             try_continue(1,0);
             NumChildren--;  /* Cleaned up after a child */
             try_continue(0,1);
@@ -44,7 +46,8 @@ void sig_child() {
     }
 }
 
-void child(char *address, int portnum) {
+void child(char *address, int portnum)
+{
     zterr err;
     int stat = 0;
     int i;
@@ -85,7 +88,8 @@ void child(char *address, int portnum) {
         goto err_ret;
 
     err = ztca_Init(FALSE);
-    if (err != ZTERR_OK) {
+    if (err != ZTERR_OK)
+    {
         TZTCA_PRN_RES("ztca_Init - ", TZTCA_ERR_INIT & err);
         err |= TZTCA_ERR_INIT;
         goto err_ret;
@@ -97,11 +101,9 @@ void child(char *address, int portnum) {
         int stat = nzdh_KeyAgreePhase1(ksize, (GPE_DH_CONTEXT_T**)&nzdh_clt_ctx);
         {
             int converted_number = htonl(nzdh_clt_ctx->publicValueLen);
-#if 0
             try_continue(1,0);
             dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INIT_SZ, (byte*)&(converted_number), sizeof(converted_number));
             try_continue(0,1);
-#endif
             try_continue(1,0);
             dhsocket_send(sock.sfd, MSG_KEX_DH_GEX_INIT, (byte*)nzdh_clt_ctx->publicValue, nzdh_clt_ctx->publicValueLen);
             try_continue(0,1);
@@ -131,11 +133,14 @@ void child(char *address, int portnum) {
         try_continue(1,0);
         ret = dhsocket_recv_exp(sock.sfd, (byte*)&buf_sz, sizeof(buf_sz),MSG_KEX_DH_GEX_GROUP_SZ);
         try_continue(0,1);
-        if(ret!=0 && retry_num <5) {
+        if(ret!=0 && retry_num <5)
+        {
             printf("ret of MSG_KEX_DH_GEX_GROUP_SZ is %d, retry_num=%d\n", ret, retry_num);
             retry_num++;
             goto retry0;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
         rcv_sz = ntohl(buf_sz);
@@ -148,11 +153,14 @@ void child(char *address, int portnum) {
         try_continue(1,0);
         ret = dhsocket_recv_exp(sock.sfd, buf, rcv_sz,MSG_KEX_DH_GEX_GROUP);
         try_continue(0,1);
-        if(ret!=0 && retry_num <5) {
+        if(ret!=0 && retry_num <5)
+        {
             printf("ret of MSG_KEX_DH_GEX_GROUP is %d, retry_num=%d\n", ret, retry_num);
             retry_num++;
             goto retry1;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
         buf[rcv_sz] = '\0';
@@ -168,7 +176,8 @@ void child(char *address, int portnum) {
 #endif
         agreedSecretLens = 0;
         if ((agreedSecrets =
-                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL) {
+                 nzdh_AllocAgreedSecretKey((unsigned int *)&agreedSecretLens)) == NULL)
+        {
             goto err_ret;
         }
         int stat = nzdh_KeyAgreePhase2(ksize, nzdh_clt_ctx->cryptoCtx,other,agreedSecrets,
@@ -192,11 +201,14 @@ void child(char *address, int portnum) {
         ret = dhsocket_recv_exp(sock.sfd, buf, bs,MSG_KEX_DH_GEX_REPLY);
         try_continue(0,1);
 
-        if(ret!=0 && retry_num <5) {
+        if(ret!=0 && retry_num <5)
+        {
             printf("ret of MSG_KEX_DH_GEX_REPLY is %d, retry_num=%d\n", ret, retry_num);
             retry_num++;
             goto retry2;
-        } else if(retry_num>=5) {
+        }
+        else if(retry_num>=5)
+        {
             goto err_ret;
         }
         buf[bs] = '\0';
@@ -211,7 +223,8 @@ void child(char *address, int portnum) {
         _gp_dumpBuf(0, errmsg, agreedSecrets, agreedSecretLens);
         try_continue(0,1);
 #endif
-        if(memcmp(agreedSecrets, buf, bs)!=0|| ret !=0) {
+        if(memcmp(agreedSecrets, buf, bs)!=0|| ret !=0)
+        {
             char sec_msg[] = "Fail";
             char errmsg[215] = "";
 
@@ -235,7 +248,9 @@ void child(char *address, int portnum) {
             _gp_dumpBuf(0, errmsg, agreedSecrets, agreedSecretLens);
             try_continue(0,1);
             goto err_ret;
-        } else {
+        }
+        else
+        {
             char sec_msg[] = "Succ";
             try_continue(1,0);
             glob_var[2]++;
@@ -255,7 +270,8 @@ void child(char *address, int portnum) {
 err_ret:
     poll(0,0,100);  /* wait .1s */
     err = ztca_Shutdown();
-    if (err != ZTERR_OK) {
+    if (err != ZTERR_OK)
+    {
         TZTCA_PRN_RES("ztca_Shutdown - ", TZTCA_ERR_SHUTDOWN & err);
         stat = TZTCA_ERR_INIT;
     }
@@ -267,7 +283,8 @@ err_ret:
     exit(0);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int child_count=0;
     time_t start;
     int fd;
@@ -276,11 +293,13 @@ int main(int argc, char *argv[]) {
     char *hostname = NULL;
     char *addr = NULL;
 
-    if(argc < 4 ) {
+    if(argc < 4 )
+    {
         printf("Usage %s <hostname> <port> <duration>\n",argv[0]);
         exit(0);
     }
-    if(argv[3]) {
+    if(argv[3])
+    {
         xdua = atoi(argv[3]);
         if(xdua==0)
             duration = DEFAULT_DURATION;
@@ -322,23 +341,29 @@ int main(int argc, char *argv[]) {
         perror("mmap");
     s_memclr(glob_var, (10)*sizeof(int));
 
-    while ( time(0) - start < duration ) {
-        if ( NumChildren < 1 ) {
+    while ( time(0) - start < duration )
+    {
+        if ( NumChildren < 1 )
+        {
             int PID;
 
-            if ( (PID = fork()) == 0 ) {
+            if ( (PID = fork()) == 0 )
+            {
                 child(addr,atoi(argv[2]));
-            } else if ( PID > 0 ) {
+            }
+            else if ( PID > 0 )
+            {
                 /*printf("child #%d\r", ++child_count);*/
                 try_continue(1,0);
                 NumChildren++;
                 try_continue(0,1);
-            } else {
+            }
+            else
+            {
                 perror("fork() failed");
             }
-        } else if(NumChildren==SINGLECHILD) {
-        	child(addr,atoi(argv[2]));
-        } else
+        }
+        else
             sleep(1);
     }
     while ( NumChildren > 0 )
